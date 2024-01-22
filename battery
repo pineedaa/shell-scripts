@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Directorio donde se encuentran las baterías
+dir="/sys/class/power_supply/"
+
+# Inicializar un objeto vacío para almacenar la información de las baterías
+json='{}'
+
+# Contador para los índices de las baterías
+contador=0
+
+# Recorrer todos los archivos en el directorio de las baterías
+for file in $(ls $dir); do
+ # Comprobar si el archivo es una batería
+ if [[ $file =~ ^BAT[0-9]+$ ]]; then
+    # Obtener la ruta completa al archivo de la batería
+    bat="${dir}${file}"
+    # Comprobar si el archivo existe
+    if [ -d $bat ]; then
+      # Obtener el porcentaje de la batería
+      per=$(cat "$bat/capacity")
+      # Obtener el estado de la batería en minusculas
+      sta=$(cat "$bat/status" | tr '[:upper:]' '[:lower:]')
+
+      # Crear un nuevo objeto para la batería
+      bat_info=$(jq -n --arg bat "bat$contador" --arg cha "$per" --arg st "$sta" '{($bat): {"charge": $cha, "status": $st}}')
+
+      # Añadir la información de la batería al objeto JSON
+      json=$(echo $json | jq --argjson bat_info "$bat_info" '. * $bat_info')
+
+      # Incrementar el contador
+      let contador++
+    fi
+ fi
+done
+
+# Imprimir el objeto JSON en una sola línea
+echo "$json"
