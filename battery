@@ -21,13 +21,10 @@ for file in $(ls $dir); do
       per=$(cat "$bat/capacity")
       # Obtener el estado de la batería en minusculas
       sta=$(cat "$bat/status" | tr '[:upper:]' '[:lower:]')
-
       # Crear un nuevo objeto para la batería
-      bat_info=$(jq -n --arg bat "bat$contador" --arg cha "$per" --arg st "$sta" '{($bat): {"charge": $cha, "status": $st}}')
-
+      bat_info="{\"bat$contador\": {\"charge\": $per, \"status\": \"$sta\"}}"
       # Añadir la información de la batería al objeto JSON
       json=$(echo $json | jq --argjson bat_info "$bat_info" '. * $bat_info')
-
       # Incrementar el contador
       let contador++
     fi
