@@ -1,0 +1,21 @@
+#!/bin/sh
+
+status() {
+  [ $(cat /sys/class/net/w*/operstate) = down ] && echo no && exit
+  echo yes
+}
+
+symbol() {
+  [ $(cat /sys/class/net/w*/operstate) = down ] && echo 󰖪 && exit
+  echo 󰖩
+}
+
+name() {
+  nmcli -t -f GENERAL.CONNECTION,GENERAL.DEVICE dev show | head -n 1 | cut -d':' -f2
+}
+
+wifi_info=$(jq -n --arg connected "$(status)" --arg name "$(name)" --arg icon "$(symbol)" '{connected: $connected, network: $name, icon: $icon}')
+
+echo $wifi_info
+
+exit
