@@ -1,0 +1,85 @@
+#!/bin/bash
+
+inc_vol() {
+  if is_muted; then
+    toggle_mute
+  fi
+
+  if (( $(get_vol | jq ".volume") > 99 )); then
+    echo "max" && return 1
+  fi
+
+  if command -v pactl &>/dev/null; then
+     pactl -- set-sink-volume 0 +2%
+  elif command -v amixer &>/dev/null; then
+     amixer -q sset Master 2%+
+  elif command -v pamixer &>/dev/null; then
+     pamixer --increase 2
+  fi
+}
+
+dec_vol() {
+  if is_muted; then
+    toggle_mute
+  fi
+
+  if command -v pactl &>/dev/null; then
+     pactl -- set-sink-volume 0 -2%
+  elif command -v amixer &>/dev/null; then
+     amixer -q sset Master 2%-
+  elif command -v pamixer &>/dev/null; then
+     pamixer --decrease 2
+  else
+    return 1
+  fi
+}
+
+toggle_mute() {
+  if command -v pactl &>/dev/null; then
+    pactl set-sink-mute @DEFAULT_SINK@ toggle
+  elif command -v amixer &>/dev/null; then
+    amixer -D pulse sset Master toggle &>/dev/null
+  elif command -v pamixer &>/dev/null; then
+    pamixer --toggle-mute
+  else
+    return 1
+  fi
+}
+
+is_muted() {
+  if command -v pactl &>/dev/null; then
+    pactl list sinks | grep 'Mute: yes' &> /dev/null
+    return $?
+  elif command -v amixer &>/dev/null; then
+    amixer get Master | grep 'off' &> /dev/null
+    return $?
+  elif command -v pamixer &>/dev/null; then
+    pamixer --get-mute | grep 'true' &> /dev/null
+    return $?
+  else
+    return 1
+  fi
+}
+
+get_vol() {
+  VOLUME=""
+  muted=$(is_muted && echo "yes" || echo "no")
+  if command -v pactl &>/dev/null; then
+    VOLUME=$(pactl list sinks | grep '^[[:space:]]Volume:' | head -n 2 | tail -n 1 | sed -e 's,.* \([0-9][0-9]*\)%.*,\1,')
+  elif command -v pamixer &>/dev/null; then
+    VOLUME=$(pamixer --get-volume)
+  elif command -v amixer &>/dev/null; then
+    VOLUME=$(amixer sget Master | awk -F"[][]" '/Left:/ { print $2 }' | tr -d "%")
+  else
+    return 1
+  fi
+
+ echo "{\"volume\": $VOLUME, \"muted\": \"$muted\"}"
+}
+
+[ "$1" = "inc" ] && inc_vol && exit
+[ "$1" = "dec" ] && dec_vol && exit
+[ "$1" = "get" ] && get_vol && exit
+[ "$1" = "mute" ] && toggle_mute && exit
+
+exit
