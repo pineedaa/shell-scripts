@@ -3,7 +3,7 @@
 LANG=en
 
 status() {
-  if [[ $(nmcli networking connectivity) = "full" ]]; then
+  if [[ $(nmcli networking connectivity) =~ ^(full|limited|portal)$ ]]; then
     echo "connected"
   else
     echo "disconnected"
@@ -25,7 +25,7 @@ symbol() {
 }
 
 name() {
-  if [[ $(nmcli networking connectivity) = "full" ]]; then
+  if [[ $(nmcli networking connectivity) =~ ^(full|limited|portal)$ ]]; then
     echo $(nmcli -t -f GENERAL.CONNECTION,GENERAL.DEVICE dev show | head -n 1 | cut -d':' -f2)
   fi
 }
