@@ -1,21 +1,35 @@
 #!/bin/sh
 
+LANG=en
+
 status() {
-  [ $(cat /sys/class/net/w*/operstate) = down ] && echo no && exit
-  echo yes
+  if [[ $(nmcli networking connectivity) = "full" ]]; then
+    echo "connected"
+  else
+    echo "disconnected"
+  fi
 }
 
 symbol() {
-  [ $(cat /sys/class/net/w*/operstate) = down ] && echo 󰖪 && exit
-  echo 󰖩
+  st=$(nmcli networking connectivity)
+  if [[ $st = "full" ]]; then
+    echo 󰤨
+    return 0
+  elif [[ $st = "none" ]]; then
+    echo 󰤯
+  else
+    echo 󰤩
+  fi
+
+  return 1
 }
 
 name() {
-  nmcli -t -f GENERAL.CONNECTION,GENERAL.DEVICE dev show | head -n 1 | cut -d':' -f2
+  if [[ $(nmcli networking connectivity) = "full" ]]; then
+    echo $(nmcli -t -f GENERAL.CONNECTION,GENERAL.DEVICE dev show | head -n 1 | cut -d':' -f2)
+  fi
 }
 
-wifi_info=$(jq -n --arg connected "$(status)" --arg name "$(name)" --arg icon "$(symbol)" '{connected: $connected, network: $name, icon: $icon}')
-
-echo $wifi_info
+echo "{ \"status\": \"$(status)\", \"network\": \"$(name)\", \"icon\": \"$(symbol)\" }"
 
 exit
