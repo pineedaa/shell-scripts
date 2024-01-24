@@ -20,7 +20,7 @@ for file in $(ls $dir); do
       # Obtener el porcentaje de la batería
       per=$(cat "$bat/capacity")
       # Obtener el estado de la batería en minusculas
-      sta=$(cat "$bat/status" | tr '[:upper:]' '[:lower:]')
+      sta=$(cat "$bat/status" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
       # Crear un nuevo objeto para la batería
       bat_info="{\"bat$contador\": {\"charge\": $per, \"status\": \"$sta\"}}"
       # Añadir la información de la batería al objeto JSON
