@@ -1,0 +1,24 @@
+#!/bin/bash
+
+resolution=$(xrandr --current | grep '*' | uniq | awk '{print $1}')
+width=$(echo $resolution | cut -f1 -d'x')
+height=$(echo $resolution | cut -f2 -d'x')
+
+get_resolution() {
+  echo "{\"width\": \"$width\", \"height\": \"$height\"}"
+}
+
+percent_to_px() {
+  # Check if we receive 2 parameters
+  if [ $# -ne 2 ]; then
+    echo "Usage: percent_to_px <width> <height>"
+    return 1
+  fi
+
+  pxwidth=$(awk -v num1="$1" -v num2="$width" 'BEGIN {print num1/100*num2}')
+  pxheight=$(awk -v num1="$2" -v num2="$height" 'BEGIN {print num1/100*num2}')
+  echo "{\"width\": \"$pxwidth\", \"height\": \"$pxheight\"}"
+}
+
+[ "$1" = "get" ] && get_resolution && exit
+echo $(percent_to_px $1 $2)
