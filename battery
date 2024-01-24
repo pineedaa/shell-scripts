@@ -3,11 +3,8 @@
 # Directorio donde se encuentran las baterías
 dir="/sys/class/power_supply/"
 
-# Inicializar un objeto vacío para almacenar la información de las baterías
-json='{}'
-
-# Contador para los índices de las baterías
-contador=0
+# Inicializar un array vacío para almacenar la información de las baterías
+json='[]'
 
 # Recorrer todos los archivos en el directorio de las baterías
 for file in $(ls $dir); do
@@ -22,11 +19,9 @@ for file in $(ls $dir); do
       # Obtener el estado de la batería en minusculas
       sta=$(cat "$bat/status" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
       # Crear un nuevo objeto para la batería
-      bat_info="{\"bat$contador\": {\"charge\": $per, \"status\": \"$sta\"}}"
-      # Añadir la información de la batería al objeto JSON
-      json=$(echo $json | jq --argjson bat_info "$bat_info" '. * $bat_info')
-      # Incrementar el contador
-      let contador++
+      bat_info="{\"charge\": $per, \"status\": \"$sta\"}"
+      # Añadir la información de la batería al array JSON
+      json=$(echo $json | jq --argjson bat_info "$bat_info" '. + [$bat_info]')
     fi
  fi
 done
